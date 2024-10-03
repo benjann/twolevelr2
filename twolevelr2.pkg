@@ -1,0 +1,8 @@
+v 3
+d twolevelr2: Stata module to compute within, between, and overall R-squared in linear two-level models
+d 
+d Author: Ben Jann, University of Bern, ben.jann@unibe.ch
+d
+d Distribution-Date: 20241003
+f twolevelr2.sthlp
+f twolevelr2.ado
