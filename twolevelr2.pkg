@@ -3,6 +3,6 @@ d twolevelr2: Stata module to compute within, between, and overall R-squared in 
 d 
 d Author: Ben Jann, University of Bern, ben.jann@unibe.ch
 d
-d Distribution-Date: 20241003
+d Distribution-Date: 20241007
 f twolevelr2.sthlp
 f twolevelr2.ado

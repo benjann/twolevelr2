@@ -11,6 +11,8 @@ To install `twolevelr2` from GitHub, type
 
 in Stata. Stata version 14.2 or newer is required.
 
+---
+
 Example:
 
     . use https://www.stata-press.com/data/r18/gsem_nlsy
@@ -33,5 +35,11 @@ Example:
                  Overall |  .3032047 
     --------------------------------
 
+---
 
+Changes:
+
+    07oct2024
+    - level-one weights were ignored in _l2zero subroutine; this is fixed
+    - removed undocumented -plugin- option
 

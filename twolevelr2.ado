@@ -1,4 +1,4 @@
-*! version 1.0.1  03oct2024  Ben Jann
+*! version 1.0.2  04oct2024  Ben Jann
 
 program twolevelr2, rclass sortpreserve
     version 14.2
@@ -7,7 +7,7 @@ program twolevelr2, rclass sortpreserve
     syntax varlist(fv) [if] [in], Ivar(varname numeric)/*
         */ [ PWeights(varlist numeric max=2) FWeights(varlist numeric max=2)/*
         */ IWeights(passthru)/*
-        */ JOINTly plugin v2tol(real 1e-15) NOIsily * ]
+        */ JOINTly v2tol(real 1e-15) NOIsily * ]
     if "`noisily'"!="" {
         local noi
         local qui qui
@@ -165,7 +165,7 @@ program twolevelr2, rclass sortpreserve
         }
         `qui' di as txt " done)"
     }
-    else if "`plugin'"=="" { // using pairwise models
+    else { // using pairwise models
         local msg = comb(`kx',2)
         if `msg'==1 local msg "1 pairwise model"
         else        local msg "`msg' pairwise models"
@@ -232,46 +232,6 @@ program twolevelr2, rclass sortpreserve
         mata:  st_replacematrix("`Ve'", makesymmetric(st_matrix("`Ve'")))
         `qui' di as txt " done)"
     }
-    else { // using univariate models
-        if `kx'==1 local msg "1 univariate model"
-        else       local msg "`kx' univariate models"
-        `qui' di as txt "(estimating `msg' " _c
-        local uvars
-        local evars
-        forv i = 1/`kx' {
-            tempvar uvar evar
-            local uvars `uvars' `uvar'
-            local evars `evars' `evar'
-            if `l2zero`i'' {
-                `noi' mixed `v`i'' if `touse', `options'
-                qui gen byte `uvar' = 0 if `touse'
-            }
-            else {
-                `noi' mixed `v`i'' `ZVARS' if `touse' || `ivar':/*
-                    */ , `options'
-                qui predict double `uvar' if `touse', reffects
-            }
-            qui predict double `evar' if `touse', residuals
-            // copy depvar equation
-            if `i'==1 {
-                if `kz' {
-                    if !`l2zero1' {
-                        matrix `bz' = e(b)
-                        matrix `bz' = `bz'[1,1..`kz']
-                    }
-                }
-            }
-            `qui' di as txt "." _c
-        }
-        if "`w2'"!="" qui corr `uvars' if `tag' [aw=`w2'], cov
-        else          qui corr `uvars' if `tag', cov
-        matrix `Vu' = r(C) * ((r(N)-1)/r(N))
-        if "`w2'"!=""      qui corr `evars' if `touse' [aw=`w1'*`w2'], cov
-        else if "`w1'"!="" qui corr `evars' if `touse' [aw=`w1'], cov
-        else               qui corr `evars' if `touse', cov
-        matrix `Ve' = r(C) * ((r(N)-1)/(r(N)))
-        `qui' di as txt " done)"
-    }
 
     // get variances of level2 predictors
     tempname bVz
@@ -296,10 +256,17 @@ program twolevelr2, rclass sortpreserve
         matrix `bVu' = 0
         matrix `bVe' = 0
     }
-    scalar `r2'  = (`bVz'[1,1] + `bVu'[1,1] + `bVe'[1,1]) / /*
-                */ (`bVz'[1,1] + `Vu'[1,1] + `Ve'[1,1])
-    scalar `r2u' = (`bVz'[1,1] +`bVu'[1,1]) / (`bVz'[1,1] + `Vu'[1,1])
-    scalar `r2e' = `bVe'[1,1] / `Ve'[1,1]
+    if `l2zero1' {
+        scalar `r2'  = `bVe'[1,1] / `Ve'[1,1]
+        scalar `r2u' = 0
+        scalar `r2e' = `bVe'[1,1] / `Ve'[1,1]
+    }
+    else {
+        scalar `r2'  = (`bVz'[1,1] + `bVu'[1,1] + `bVe'[1,1]) / /*
+                    */ (`bVz'[1,1] + `Vu'[1,1] + `Ve'[1,1])
+        scalar `r2u' = (`bVz'[1,1] +`bVu'[1,1]) / (`bVz'[1,1] + `Vu'[1,1])
+        scalar `r2e' = `bVe'[1,1] / `Ve'[1,1]
+    }
 
     // returns
     return local cmd       "twolevelr2"
@@ -310,7 +277,6 @@ program twolevelr2, rclass sortpreserve
     return local zvars     "`zvars'"
     return local ovars     "`ovars'"
     return local jointly   "`jointly'"
-    return local plugin    "`plugin'"
     if      "`wtype'"=="pw" return local pweights "`pweights'"
     else if "`wtype'"=="fw" return local fweights "`fweights'"
     return scalar N    = `N'
@@ -342,7 +308,7 @@ program twolevelr2, rclass sortpreserve
     // display
     tempname R
     mat `R' = `r2e' \ `r2u' \ `r2'
-    mat coln `R' = "`depvar'"
+    mat coln `R' = "`depdvar'"
     mat rown `R' = "Within (level 1)" "Between (level 2)" "Overall"
     di ""
     di _col(5) as txt "Number of obs    = " as res %9.0gc `N'
@@ -352,20 +318,25 @@ end
 
 program _l2zero // check whether there is variance in group means
     args tol nm touse tag ivar v w1 w2
-    if "`wvar'"!="" {
-        tempname Z W
-        qui by `touse' `ivar': gen double `Z' = sum(`v'*`w1') if `touse'
-        qui by `touse' `ivar': gen double `W' = sum(`w1') if `touse'
-        qui by `touse' `ivar': replace `Z' = `Z'[_N] / `W'[_N] if `touse'
+    tempname M
+    _grpmeans `M' `v' `touse' `ivar' `w1'
+    if "`w2'"!="" qui su `M' if `tag' [aw=`w2']
+    else          qui su `M' if `tag'
+    c_local `nm' = (r(Var) * ((r(N)-1)/r(N))) < `tol'
+end
+
+program _grpmeans
+    args M X touse id w1
+    if "`w1'"!="" {
+        tempname W
+        qui by `touse' `id': gen double `M' = sum(`X'*`w1') if `touse'
+        qui by `touse' `id': gen double `W' = sum(`w1') if `touse'
+        qui by `touse' `id': replace    `M' = `M'[_N] / `W'[_N] if `touse'
     }
     else {
-        tempname Z
-        qui by `touse' `ivar': gen double `Z' = sum(`v') if `touse'
-        qui by `touse' `ivar': replace `Z' = `Z'[_N] / _N if `touse'
+        qui by `touse' `id': gen double `M' = sum(`X') if `touse'
+        qui by `touse' `id': replace    `M' = `M'[_N] / _N if `touse'
     }
-    if "`w2'"!="" qui su `Z' if `tag' [aw=`w2']
-    else          qui su `Z' if `tag'
-    c_local `nm' = (r(Var) * ((r(N)-1)/r(N))) < `tol'
 end
 
 program _addtoV
@@ -374,5 +345,4 @@ program _addtoV
     gettoken i 0 : 0
     matrix `V'[`i',`i'] = `V'[`i',`i'] + (`0' - `V'[`i',`i']) / `N'[1,`i']
 end
-
 
