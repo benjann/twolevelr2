@@ -308,7 +308,7 @@ program twolevelr2, rclass sortpreserve
     // display
     tempname R
     mat `R' = `r2e' \ `r2u' \ `r2'
-    mat coln `R' = "`depdvar'"
+    mat coln `R' = "`depvar'"
     mat rown `R' = "Within (level 1)" "Between (level 2)" "Overall"
     di ""
     di _col(5) as txt "Number of obs    = " as res %9.0gc `N'
