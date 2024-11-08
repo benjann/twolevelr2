@@ -2,7 +2,7 @@
 Stata module to compute within, between, and overall R-squared in linear two-level models
 
 `twolevelr2` computes the within, between, and overall R-squared for a two-level
-model as proposed by [Karlson and Holm (2024)](https://doi.org/10.31235/osf.io/x6gva).
+model as proposed by [Holm et al. (2024)](https://doi.org/10.31235/osf.io/x6gva).
 
 To install `twolevelr2` from GitHub, type
 

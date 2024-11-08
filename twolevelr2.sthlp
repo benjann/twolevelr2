@@ -1,5 +1,5 @@
 {smcl}
-{* 03oct2024}{...}
+{* 08oct2024}{...}
 {hi:help twolevelr2}{...}
 {right:{browse "http://github.com/benjann/twolevelr2/"}}
 {hline}
@@ -27,7 +27,7 @@
 
 {pstd}
     {cmd:twolevelr2} computes the within, between, and overall R-squared for
-    a two-level model as proposed by Karlson and Holm (2024).
+    a two-level model as proposed by Holm et al. (2024).
 
 
 {title:Options}
@@ -145,9 +145,9 @@
 {title:References}
 
 {phang}
-    Karlson, K.B., A. Holm 2024. Explained Variance in
+    Holm, A., B. Jann, K.B. Karlson. 2024. Explained Variance in
     Two-Level Models: A New Approach. Available from
-    {browse "http://doi.org/10.31235/osf.io/x6gva"}.
+    {browse "https://doi.org/10.31235/osf.io/x6gva"}.
 
 
 {title:Author}
@@ -161,7 +161,7 @@
 {pmore}
     Jann, B. (2024). twolevelr2: Stata module to compute within, between, and
     overall R-squared in linear two-level models. Available from
-    {browse "http://github.com/benjann/twolevelr2/"}.
+    {browse "https://github.com/benjann/twolevelr2/"}.
 
 
 {title:Also see}
